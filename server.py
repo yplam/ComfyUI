@@ -527,17 +527,19 @@ class PromptServer():
 
             return web.Response(status=200)
         
-    def add_routes(self):
+    def add_routes(self, uri_prefix=""):
+        uri_prefix = uri_prefix.rstrip("/")
         self.user_manager.add_routes(self.routes)
-        self.app.add_routes(self.routes)
+        for route in self.routes:
+            self.app.router.add_route(route.method, f'{uri_prefix}{route.path}', route.handler, **route.kwargs)
 
         for name, dir in nodes.EXTENSION_WEB_DIRS.items():
             self.app.add_routes([
-                web.static('/extensions/' + urllib.parse.quote(name), dir),
+                web.static(f'{uri_prefix}/extensions/' + urllib.parse.quote(name), dir),
             ])
 
         self.app.add_routes([
-            web.static('/', self.web_root),
+            web.static(f'{uri_prefix}/', self.web_root),
         ])
 
     def get_queue_info(self):
